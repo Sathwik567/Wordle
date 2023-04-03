@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WORDLE</title>
+    <link rel = "icon" href = "C:\Users\91944\OneDrive\Desktop\wordle\wordle.jpg" type = "image/x-icon">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface">
+    <style>* {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+      #board-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        margin-bottom: 10px;
+        margin-top: 10px;
+
+      }
+
+      #board {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-gap: 5px;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      #keyboard-container {
+        height: 200px;
+      }
+
+      .keyboard-row {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin: 0 auto 8px;
+        touch-action: manipulation;
+
+      }
+      .wide-button {
+        width: 73px !important;
+      }
+
+      .keyboard-row button {
+        border: 0;
+        padding: 0;
+        height: 50px;
+        cursor: pointer;
+        text-transform: uppercase;
+        margin-right: 6px;
+        border-radius: 4px;
+        user-select: none;
+      }
+
+      .loading-screen {
+        visibility: hidden;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .show {
+        visibility: visible;
+      }
+      .overlay {
+        z-index: 1;
+        background-color: rgb(255 255 255 / 50%);
+      }
+
+      .square-spinner {
+        height: 65px;
+        width: 65px;
+      }
+
+      .brand {
+        font-family: 'Abril Fatface';
+      }
+
+      .game {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 50px 0px;
+        position: relative;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        grid-gap: 5px;
+        max-width: 350px;
+      }
+
+      #first-row button{
+        width: 40px;
+      }
+
+      #second-row button{
+        width: 40px
+      }
+
+      #third-row button{
+        width: 40px;
+      }
+
+      .board-square {
+        border: 2px solid #d3d6da;
+        height: 62px;
+        width: 62px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        font-size: 35px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      @keyframes flash {
+        5% {
+          border-color: crimson;
+        }
+
+        50% {
+          border-color: #d3d6da;
+        }
+      }
+
+      .error {
+        animation-name: flash;
+        animation-duration: 1s;
+      }
+
+      .wrong {
+        background-color: #787c7e;
+        color: #ffffff;
+      }
+
+      .close {
+        background-color: #c9b458;
+        color: #ffffff;
+      }
+
+      .correct {
+        background-color: #6aaa64;
+        color: #ffffff;
+      }
+</style>
+</head>
+
+<body style="background-color:Gray">
+    <header class="header">
+      <center>
+        <h1 class = "title"><strong><u>Wordle</u></strong></h1>
+      </center>
+    </header>
+    <section class="loading-screen overlay">
+        <img class="square-spinner" src="spinner.jpg" alt="Spinner icon">
+    </section>
+
+    <section class="game">
+        <div class="board">
+            <div class="board-square" id="1"></div>
+            <div class="board-square" id="2"></div>
+            <div class="board-square" id="3"></div>
+            <div class="board-square" id="4"></div>
+            <div class="board-square" id="5"></div>
+            <div class="board-square" id="6"></div>
+            <div class="board-square" id="7"></div>
+            <div class="board-square" id="8"></div>
+            <div class="board-square" id="9"></div>
+            <div class="board-square" id="10"></div>
+            <div class="board-square" id="11"></div>
+            <div class="board-square" id="12"></div>
+            <div class="board-square" id="13"></div>
+            <div class="board-square" id="14"></div>
+            <div class="board-square" id="15"></div>
+            <div class="board-square" id="16"></div>
+            <div class="board-square" id="17"></div>
+            <div class="board-square" id="18"></div>
+            <div class="board-square" id="19"></div>
+            <div class="board-square" id="20"></div>
+            <div class="board-square" id="21"></div>
+            <div class="board-square" id="22"></div>
+            <div class="board-square" id="23"></div>
+            <div class="board-square" id="24"></div>
+            <div class="board-square" id="25"></div>
+            <div class="board-square" id="26"></div>
+            <div class="board-square" id="27"></div>
+            <div class="board-square" id="28"></div>
+            <div class="board-square" id="29"></div>
+            <div class="board-square" id="30"></div>
+        </div>
+    </section>
+
+    <div id="board-container">
+        <div id="board"></div>
+      </div>
+
+      <div id="keyboard-container" style="color:white">
+        <div class="keyboard-row" id="first-row">
+          <button class="key" data-key="q">q</button>
+          <button data-key="w">w</button>
+          <button data-key="e">e</button>
+          <button data-key="r">r</button>
+          <button data-key="t">t</button>
+          <button data-key="y">y</button>
+          <button data-key="u">u</button>
+          <button data-key="i">i</button>
+          <button data-key="o">o</button>
+          <button data-key="p">p</button>
+        </div>
+        <div class="keyboard-row" id="second-row">
+          <div class="spacer-half"></div>
+          <button data-key="a">a</button>
+          <button data-key="s">s</button>
+          <button data-key="d">d</button>
+          <button data-key="f">f</button>
+          <button data-key="g">g</button>
+          <button data-key="h">h</button>
+          <button data-key="j">j</button>
+          <button data-key="k">k</button>
+          <button data-key="l">l</button>
+          <div class="spacer-half"></div>
+        </div>
+        <div class="keyboard-row" id="third-row">
+          <button data-key="enter" class="wide-button">Enter</button>
+          <button data-key="z">z</button>
+          <button data-key="x">x</button>
+          <button data-key="c">c</button>
+          <button data-key="v">v</button>
+          <button data-key="b">b</button>
+          <button data-key="n">n</button>
+          <button data-key="m">m</button>
+          <button data-key="del" class="wide-button">⌫</button>
+        </div>
+      </div>
+
+    <script>
+    const squares = document.querySelectorAll('.board-square');
+    const loadingScreen = document.querySelector('.loading-screen');
+    const ANSWER_LENGTH = 5;
+    const ROUNDS = 6;
+
+    async function init() {
+      const word = await getWordOfTheDay();
+      let currentGuess = '';
+      let round = 0;
+      let done = false;
+
+      document.addEventListener('keydown', function handleKeyPress(event) {
+        if (done) {
+          return;
+        }
+
+        const action = event.key;
+
+        if (action === 'Enter') {
+          commitAnswer();
+        }
+
+        if (action === 'Backspace') {
+          backspace();
+        }
+
+        if (isLetter(action)) {
+          displayLetter(action);
+        }
+      });
+
+      function displayLetter(letter) {
+        if (currentGuess.length < ANSWER_LENGTH) {
+          // display letter on correct sqaure
+          squares[round * ANSWER_LENGTH + currentGuess.length].innerText = letter;
+          currentGuess += letter.toLowerCase();
+        }
+      }
+
+      function backspace() {
+        currentGuess = currentGuess.slice(0, -1);
+        // remove letter from correct sqaure
+        squares[round * ANSWER_LENGTH + currentGuess.length].innerText = '';
+      }
+
+      async function commitAnswer() {
+        if (currentGuess.length === ANSWER_LENGTH) {
+          if (!(await isValid(currentGuess))) {
+            flash();
+            return;
+          }
+
+          wordMap = makeMap(word);
+          markWord();
+
+          if (currentGuess === word) {
+            done = true;
+            alert('You win! Good job!');
+            return;
+          }
+
+          round++;
+          currentGuess = '';
+          wordMap = makeMap(word);
+
+          if (round === ROUNDS) {
+            done = true;
+            alert(`You lost! The word of the day was ${word.toUpperCase()}.`);
+          }
+        }
+      }
+
+      async function isValid(guess) {
+        setLoading(true);
+        const res = await fetch('https://words.dev-apis.com/validate-word', {
+          method: 'POST',
+          body: JSON.stringify({ word: guess }),
+        });
+        const { validWord } = await res.json();
+        setLoading(false);
+        return validWord;
+      }
+
+      async function getWordOfTheDay() {
+        setLoading(true);
+        const res = await fetch('https://words.dev-apis.com/word-of-the-day');
+        const { word } = await res.json();
+        setLoading(false);
+        return word;
+      }
+
+      function flash() {
+        // We are removing it and adding it back again to flash more than 1 time
+        for (let i = 0; i < ANSWER_LENGTH; i++) {
+          squares[round * ANSWER_LENGTH + i].classList.remove('error');
+        }
+        setTimeout(function addClass() {
+          for (let i = 0; i < ANSWER_LENGTH; i++) {
+            squares[round * ANSWER_LENGTH + i].classList.add('error');
+          }
+        }, 10);
+      }
+
+      function markWord() {
+        for (let i = 0; i < ANSWER_LENGTH; i++) {
+          if (currentGuess.charAt(i) === word.charAt(i)) {
+            wordMap[currentGuess.charAt(i)]--;
+            markCorrect(i);
+          } else if (
+            word.includes(currentGuess.charAt(i)) &&
+            wordMap[currentGuess.charAt(i)] > 0
+          ) {
+            wordMap[currentGuess.charAt(i)]--;
+            markClose(i);
+          } else {
+            markWrong(i);
+          }
+        }
+      }
+
+      function markCorrect(position) {
+        squares[round * ANSWER_LENGTH + position].classList.add('correct');
+      }
+
+      function markClose(position) {
+        squares[round * ANSWER_LENGTH + position].classList.add('close');
+      }
+
+      function markWrong(position) {
+        squares[round * ANSWER_LENGTH + position].classList.add('wrong');
+      }
+
+      function setLoading(value) {
+        let isLoading = value;
+        loadingScreen.classList.toggle('show', isLoading);
+      }
+    }
+
+    function isLetter(letter) {
+      return (/^[a-zA-Z]$/).test(letter);
+    }
+
+    function makeMap(word) {
+      obj = {};
+      for (let i = 0; i < word.length; i++) {
+        if (word.charAt(i) in obj) {
+          obj[word.charAt(i)]++;
+          continue;
+        }
+        obj[word.charAt(i)] = 1;
+      }
+      return obj;
+    }
+
+    init();
+
+    </script>
+</body>
+
+</html>
