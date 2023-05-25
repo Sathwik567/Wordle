@@ -7,7 +7,8 @@
     <title>WORDLE</title>
     <link rel = "icon" href = "C:\Users\91944\OneDrive\Desktop\wordle\wordle.jpg" type = "image/x-icon">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface">
-    <style>* {
+    <style>
+    * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
@@ -164,7 +165,7 @@
       </center>
     </header>
     <section class="loading-screen overlay">
-        <img class="square-spinner" src="images\spinner.jpg" alt="Spinner icon">
+        <img class="square-spinner" src="spinner.jpg" alt="Spinner icon">
     </section>
 
     <section class="game">
@@ -247,15 +248,38 @@
 
     <script>
     const squares = document.querySelectorAll('.board-square');
+    const keyboardButtons = document.querySelectorAll('[data-key]');
     const loadingScreen = document.querySelector('.loading-screen');
     const ANSWER_LENGTH = 5;
     const ROUNDS = 6;
+    let currentGuess = '';
+    let round = 0;
+    let done = false;
+
 
     async function init() {
       const word = await getWordOfTheDay();
       let currentGuess = '';
       let round = 0;
       let done = false;
+
+
+      keyboardButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          if (done) {
+            return;
+          }
+
+          const letter = button.dataset.key;
+          if (letter === 'enter') {
+      commitAnswer(); // Call the function to commit the answer when Enter button is clicked
+    } else if (letter === 'del') {
+      backspace(); // Call the function to delete the previous letter when Backspace button is clicked
+    } else {
+      displayLetter(letter); // Display the letter for other buttons
+    }
+        });
+      });
 
       document.addEventListener('keydown', function handleKeyPress(event) {
         if (done) {
@@ -290,52 +314,63 @@
         // remove letter from correct sqaure
         squares[round * ANSWER_LENGTH + currentGuess.length].innerText = '';
       }
-
-      async function commitAnswer() {
+      function commitAnswer() {
         if (currentGuess.length === ANSWER_LENGTH) {
-          if (!(await isValid(currentGuess))) {
-            flash();
-            return;
-          }
+          isValid(currentGuess)
+            .then((validWord) => {
+              if (!validWord) {
+                alert('Word not in list');
+                flash();
+                return;
+              }
 
-          wordMap = makeMap(word);
-          markWord();
+              const word = getWordOfTheDay();
+              word.then((word) => {
+                markWord(word);
+                if (currentGuess === word) {
+                  done = true;
+                  alert('You win! Good job!');
+                  return;
+                }
 
-          if (currentGuess === word) {
-            done = true;
-            alert('You win! Good job!');
-            return;
-          }
+                round++;
+                currentGuess = '';
 
-          round++;
-          currentGuess = '';
-          wordMap = makeMap(word);
-
-          if (round === ROUNDS) {
-            done = true;
-            alert(`You lost! The word of the day was ${word.toUpperCase()}.`);
-          }
+                if (round === ROUNDS) {
+                  done = true;
+                  alert(`You lost! The word of the day was ${word.toUpperCase()}.`);
+                }
+              });
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            });
         }
       }
 
-      async function isValid(guess) {
+      function isValid(guess) {
         setLoading(true);
-        const res = await fetch('https://words.dev-apis.com/validate-word', {
+        return fetch('https://words.dev-apis.com/validate-word', {
           method: 'POST',
           body: JSON.stringify({ word: guess }),
-        });
-        const { validWord } = await res.json();
-        setLoading(false);
-        return validWord;
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            setLoading(false);
+            return data.validWord;
+          });
       }
 
-      async function getWordOfTheDay() {
+      function getWordOfTheDay() {
         setLoading(true);
-        const res = await fetch('https://words.dev-apis.com/word-of-the-day');
-        const { word } = await res.json();
-        setLoading(false);
-        return word;
-      }
+        return fetch('https://words.dev-apis.com/word-of-the-day')
+        .then((res) => res.json())
+        .then((data) => {
+         setLoading(false);
+         return data.word;
+        });
+        }
+
 
       function flash() {
         // We are removing it and adding it back again to flash more than 1 time
@@ -349,22 +384,35 @@
         }, 10);
       }
 
-      function markWord() {
-        for (let i = 0; i < ANSWER_LENGTH; i++) {
-          if (currentGuess.charAt(i) === word.charAt(i)) {
-            wordMap[currentGuess.charAt(i)]--;
-            markCorrect(i);
-          } else if (
-            word.includes(currentGuess.charAt(i)) &&
-            wordMap[currentGuess.charAt(i)] > 0
-          ) {
-            wordMap[currentGuess.charAt(i)]--;
-            markClose(i);
-          } else {
-            markWrong(i);
+
+
+      function markWord(word) {
+          const wordMap = makeMap(word);
+          for (let i = 0; i < ANSWER_LENGTH; i++) {
+            if (currentGuess.charAt(i) === word.charAt(i)) {
+              wordMap[currentGuess.charAt(i)]--;
+              squares[round * ANSWER_LENGTH + i].classList.add('correct');
+            } else if (wordMap[currentGuess.charAt(i)] > 0) {
+              squares[round * ANSWER_LENGTH + i].classList.add('close');
+              wordMap[currentGuess.charAt(i)]--;
+            }
           }
         }
-      }
+
+            function makeMap(word) {
+              const map = {};
+              for (let i = 0; i < word.length; i++) {
+                const letter = word.charAt(i);
+                if (map.hasOwnProperty(letter)) {
+                  map[letter]++;
+                } else {
+                  map[letter] = 1;
+                }
+              }
+              return map;
+            }
+
+
 
       function markCorrect(position) {
         squares[round * ANSWER_LENGTH + position].classList.add('correct');
@@ -384,22 +432,17 @@
       }
     }
 
-    function isLetter(letter) {
-      return (/^[a-zA-Z]$/).test(letter);
+    function isLetter(str) {
+      return str.length === 1 && str.match(/[a-z]/i);
     }
 
-    function makeMap(word) {
-      obj = {};
-      for (let i = 0; i < word.length; i++) {
-        if (word.charAt(i) in obj) {
-          obj[word.charAt(i)]++;
-          continue;
-        }
-        obj[word.charAt(i)] = 1;
+    function setLoading(isLoading) {
+      if (isLoading) {
+        loadingScreen.classList.add('visible');
+      } else {
+        loadingScreen.classList.remove('visible');
       }
-      return obj;
     }
-
     init();
 
     </script>
